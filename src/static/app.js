@@ -6,9 +6,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // Check for saved dark mode preference
   function initializeDarkMode() {
     const savedMode = localStorage.getItem("darkMode");
-    if (savedMode === "enabled" && darkModeIcon) {
+    if (savedMode === "enabled") {
       document.body.classList.add("dark-mode");
-      darkModeIcon.textContent = "☀️";
+      if (darkModeIcon) {
+        darkModeIcon.textContent = "☀️";
+      }
     }
   }
   
