@@ -552,6 +552,11 @@ document.addEventListener("DOMContentLoaded", () => {
             .join("")}
         </ul>
       </div>
+      <div class="share-buttons">
+        <button class="share-button" data-activity="${name}" data-description="${details.description}" data-schedule="${formattedSchedule}" title="Share this activity">
+          📤 Share
+        </button>
+      </div>
       <div class="activity-card-actions">
         ${
           currentUser
@@ -576,6 +581,14 @@ document.addEventListener("DOMContentLoaded", () => {
     deleteButtons.forEach((button) => {
       button.addEventListener("click", handleUnregister);
     });
+
+    // Add click handler for share button
+    const shareButton = activityCard.querySelector(".share-button");
+    if (shareButton) {
+      shareButton.addEventListener("click", () => {
+        handleShare(name, details.description, formattedSchedule);
+      });
+    }
 
     // Add click handler for register button (only when authenticated)
     if (currentUser) {
@@ -854,6 +867,47 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error signing up:", error);
     }
   });
+
+  // Handle social sharing
+  async function handleShare(activityName, description, schedule) {
+    const shareText = `Check out this activity at Mergington High School!\n\n${activityName}\n${description}\n${schedule}`;
+    const shareUrl = window.location.href;
+
+    // Try using the Web Share API first (works on mobile and some desktop browsers)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${activityName} - Mergington High School`,
+          text: shareText,
+          url: shareUrl,
+        });
+        showMessage("Activity shared successfully!", "success");
+      } catch (error) {
+        // User cancelled sharing or sharing failed
+        if (error.name !== "AbortError") {
+          console.error("Error sharing:", error);
+          showMessage("Unable to share. Please try again.", "error");
+        }
+      }
+    } else {
+      // Fallback: Copy to clipboard
+      try {
+        await navigator.clipboard.writeText(
+          `${shareText}\n\nVisit: ${shareUrl}`
+        );
+        showMessage(
+          "Activity details copied to clipboard! You can now paste and share with friends.",
+          "success"
+        );
+      } catch (error) {
+        console.error("Error copying to clipboard:", error);
+        showMessage(
+          "Unable to copy to clipboard. Please select and copy the activity details manually.",
+          "error"
+        );
+      }
+    }
+  }
 
   // Expose filter functions to window for future UI control
   window.activityFilters = {
