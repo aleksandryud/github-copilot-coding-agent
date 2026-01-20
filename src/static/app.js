@@ -540,6 +540,13 @@ document.addEventListener("DOMContentLoaded", () => {
     // Format the schedule using the new helper function
     const formattedSchedule = formatSchedule(details);
 
+    // Helper function to escape HTML for attributes
+    const escapeHtml = (text) => {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    };
+
     // Create activity tag
     const tagHtml = `
       <span class="activity-tag" style="background-color: ${typeInfo.color}; color: ${typeInfo.textColor}">
@@ -593,6 +600,24 @@ document.addEventListener("DOMContentLoaded", () => {
             .join("")}
         </ul>
       </div>
+      <div class="share-buttons">
+        <button class="share-button" data-activity="${name.replace(/"/g, '&quot;')}" title="Share this activity" aria-label="Share ${name.replace(/"/g, '&quot;')} activity">
+          📤 Share
+        </button>
+        <span class="share-label">Share:</span>
+        <button class="share-button share-facebook tooltip" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}" aria-label="Share on Facebook">
+          📘
+          <span class="tooltip-text">Share on Facebook</span>
+        </button>
+        <button class="share-button share-twitter tooltip" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}" aria-label="Share on Twitter">
+          🐦
+          <span class="tooltip-text">Share on Twitter</span>
+        </button>
+        <button class="share-button share-email tooltip" data-activity="${escapeHtml(name)}" data-description="${escapeHtml(details.description)}" data-schedule="${escapeHtml(formattedSchedule)}" aria-label="Share via Email">
+          ✉️
+          <span class="tooltip-text">Share via Email</span>
+        </button>
+      </div>
       <div class="activity-card-actions">
         ${
           currentUser
@@ -618,6 +643,14 @@ document.addEventListener("DOMContentLoaded", () => {
       button.addEventListener("click", handleUnregister);
     });
 
+    // Add click handler for share button
+    const shareButton = activityCard.querySelector(".share-button");
+    if (shareButton) {
+      shareButton.addEventListener("click", () => {
+        handleShare(name, details.description, formattedSchedule);
+      });
+    }
+
     // Add click handler for register button (only when authenticated)
     if (currentUser) {
       const registerButton = activityCard.querySelector(".register-button");
@@ -628,7 +661,56 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
+    // Add click handlers for share buttons
+    const shareButtons = activityCard.querySelectorAll(".share-button");
+    shareButtons.forEach((button) => {
+      button.addEventListener("click", handleShare);
+    });
+
     activitiesList.appendChild(activityCard);
+  }
+
+  // Handle social sharing
+  function handleShare(event) {
+    const button = event.currentTarget;
+    const activityName = button.dataset.activity;
+    const description = button.dataset.description;
+    const schedule = button.dataset.schedule;
+    
+    // Create share URL and text
+    const shareUrl = window.location.href;
+    const shareText = `Check out this activity at Mergington High School: ${activityName} - ${description}. Schedule: ${schedule}`;
+    
+    // Determine share type from button class
+    let shareType;
+    if (button.classList.contains("share-facebook")) {
+      shareType = 'facebook';
+    } else if (button.classList.contains("share-twitter")) {
+      shareType = 'twitter';
+    } else if (button.classList.contains("share-email")) {
+      shareType = 'email';
+    }
+    
+    switch (shareType) {
+      case 'facebook':
+        // Facebook share
+        const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
+        window.open(facebookUrl, '_blank', 'width=600,height=400');
+        break;
+      
+      case 'twitter':
+        // Twitter share
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+        window.open(twitterUrl, '_blank', 'width=600,height=400');
+        break;
+      
+      case 'email':
+        // Email share
+        const emailSubject = `Activity at Mergington High School: ${activityName}`;
+        const emailBody = `I wanted to share this activity with you:\n\n${activityName}\n${description}\n\nSchedule: ${schedule}\n\nLearn more at: ${shareUrl}`;
+        window.location.href = `mailto:?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+        break;
+    }
   }
 
   // Event listeners for search and filter
@@ -895,6 +977,53 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error signing up:", error);
     }
   });
+
+  // Handle social sharing
+  async function handleShare(activityName, description, schedule) {
+    const shareText = `Check out this activity at Mergington High School!\n\n${activityName}\n${description}\n${schedule}`;
+    const shareUrl = window.location.href;
+
+    // Try using the Web Share API first (works on mobile and some desktop browsers)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${activityName} - Mergington High School`,
+          text: shareText,
+          url: shareUrl,
+        });
+        showMessage("Activity shared successfully!", "success");
+      } catch (error) {
+        // User cancelled sharing or sharing failed
+        if (error.name !== "AbortError") {
+          console.error("Error sharing:", error);
+          showMessage("Unable to share. Please try again.", "error");
+        }
+      }
+    } else if (navigator.clipboard && window.isSecureContext) {
+      // Fallback: Copy to clipboard (only works in secure contexts - HTTPS)
+      try {
+        await navigator.clipboard.writeText(
+          `${shareText}\n\nVisit: ${shareUrl}`
+        );
+        showMessage(
+          "Activity details copied to clipboard! You can now paste and share with friends.",
+          "success"
+        );
+      } catch (error) {
+        console.error("Error copying to clipboard:", error);
+        showMessage(
+          "Unable to copy to clipboard. Please select and copy the activity details manually.",
+          "error"
+        );
+      }
+    } else {
+      // Final fallback: Show message to copy manually
+      showMessage(
+        "Please copy the activity details manually to share with friends.",
+        "info"
+      );
+    }
+  }
 
   // Expose filter functions to window for future UI control
   window.activityFilters = {
