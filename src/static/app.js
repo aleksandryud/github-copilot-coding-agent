@@ -11,6 +11,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (darkModeIcon) {
         darkModeIcon.textContent = "☀️";
       }
+    } else {
+      if (darkModeIcon) {
+        darkModeIcon.textContent = "🌙";
+      }
     }
   }
   
