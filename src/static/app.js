@@ -553,7 +553,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </ul>
       </div>
       <div class="share-buttons">
-        <button class="share-button" data-activity="${name}" data-description="${details.description}" data-schedule="${formattedSchedule}" title="Share this activity">
+        <button class="share-button" data-activity="${name.replace(/"/g, '&quot;')}" title="Share this activity" aria-label="Share ${name.replace(/"/g, '&quot;')} activity">
           📤 Share
         </button>
       </div>
@@ -889,8 +889,8 @@ document.addEventListener("DOMContentLoaded", () => {
           showMessage("Unable to share. Please try again.", "error");
         }
       }
-    } else {
-      // Fallback: Copy to clipboard
+    } else if (navigator.clipboard && window.isSecureContext) {
+      // Fallback: Copy to clipboard (only works in secure contexts - HTTPS)
       try {
         await navigator.clipboard.writeText(
           `${shareText}\n\nVisit: ${shareUrl}`
@@ -906,6 +906,12 @@ document.addEventListener("DOMContentLoaded", () => {
           "error"
         );
       }
+    } else {
+      // Final fallback: Show message to copy manually
+      showMessage(
+        "Please copy the activity details manually to share with friends.",
+        "info"
+      );
     }
   }
 

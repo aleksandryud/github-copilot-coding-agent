@@ -296,7 +296,7 @@ section h3 {
 }
 
 .share-button {
-  background-color: #4CAF50;
+  background-color: #2E7D32;
   color: white;
   border: none;
   padding: 6px 12px;
@@ -307,13 +307,13 @@ section h3 {
   display: flex;
   align-items: center;
   gap: 4px;
-  box-shadow: 0 2px 4px rgba(76, 175, 80, 0.2);
+  box-shadow: 0 2px 4px rgba(46, 125, 50, 0.2);
 }
 
 .share-button:hover {
-  background-color: #45a049;
+  background-color: #1B5E20;
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
+  box-shadow: 0 4px 8px rgba(46, 125, 50, 0.3);
 }
 
 .share-button:active {
